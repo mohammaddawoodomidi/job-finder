@@ -1,0 +1,40 @@
+name: Build Windows installer
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: Build
+        run: cargo build --release
+      - name: Self-test
+        run: ./target/release/job-finder.exe --selftest selftest.json
+      - name: Show self-test
+        run: Get-Content selftest.json
+      - name: Install Inno Setup
+        run: choco install innosetup -y --no-progress
+      - name: Build installer
+        run: '& "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" installer\JobFinder.iss'
+      - name: Portable zip
+        run: Compress-Archive -Path target\release\job-finder.exe,config.json -DestinationPath dist\JobFinder-portable.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: JobFinder-Windows
+          path: |
+            dist/*.exe
+            dist/*.zip
+      - name: Publish release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/*.exe
+            dist/*.zip
