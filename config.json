@@ -1,0 +1,126 @@
+{
+  "_help": "Edit this file. Lines starting with _ are comments and are ignored.",
+  "contact_email": "your-email@example.com",
+  "max_age_days": 7,
+  "output_dir": "output",
+  "http": {
+    "timeout_seconds": 20,
+    "delay_between_requests_seconds": 1.5,
+    "max_retries": 3,
+    "respect_robots_txt": true
+  },
+  "filters": {
+    "acceptable_languages": [
+      "en",
+      "fa",
+      "tr"
+    ],
+    "_acceptable_languages_help": "en=English, fa=Persian/Farsi/Dari, tr=Turkish",
+    "accept_internships": true,
+    "accept_junior_titles": true,
+    "max_min_years_required": 0,
+    "_max_min_years_required_help": "0 = strict (no experience). Set 1 to also allow '1 year' roles.",
+    "extra_include_keywords": [],
+    "extra_exclude_title_keywords": [],
+    "location_keywords": [],
+    "_location_keywords_help": "Optional. e.g. ['turkey','istanbul','kabul','remote']. Empty = any location.",
+    "include_remote_even_if_location_set": true,
+    "verify_links": true,
+    "_verify_links_help": "Checks that links found in posts still open. Broken links are flagged, jobs are never removed.",
+    "work_mode": "any",
+    "exclude_female_only": true, "exclude_companies": [],
+    "female_filter_mode": "blunt",
+    "_female_filter_mode_help": "blunt = reject any job whose page talks about female applicants (even 'women encouraged') unless men are named too; balanced = keep 'encouraged/preferred' wording; explicit = only 'women only' statements.",
+    "_exclude_female_only_help": "true = hide jobs that only women may apply to, so the list shows jobs open to men."
+  },
+  "translation": {
+    "_help": "backend: none | argos (offline) | libretranslate (your own server)",
+    "backend": "none",
+    "argos_auto_install_language_packs": true,
+    "libretranslate_url": "http://localhost:5000",
+    "libretranslate_api_key": "",
+    "cache_file": "cache/translations.json"
+  },
+  "websites": [
+    {
+      "name": "ACBAR",
+      "type": "html",
+      "url": "https://www.acbar.org/en/jobs",
+      "page_url_template": "https://www.acbar.org/en/jobs?page={page}",
+      "max_pages": 8,
+      "item_selector": "a[href*=\"/jobs/details/\"]",
+      "fetch_details": true,
+      "date_regex": "(\\d+\\s*(?:minutes?|hours?|days?|weeks?|months?)\\s*ago)",
+      "detail_date_regex": "Published\\s*(\\d{4}-\\d{2}-\\d{2})",
+      "detail_text_start": "Quick Summary",
+      "detail_text_end": "Submission Guideline",
+      "stop_when_older": true,
+      "delay_seconds": 1.2,
+      "enabled": true
+    },
+    {
+      "name": "Wazifaha",
+      "type": "html",
+      "url": "https://wazifaha.org/jobs/",
+      "page_url_template": "https://wazifaha.org/jobs/?page={page}",
+      "max_pages": 14,
+      "item_selector": "a[href*=\"/jobs/\"]",
+      "item_href_regex": "/jobs/\\d+/",
+      "card": true,
+      "company_selector": "a[href*=\"/companies/\"]",
+      "date_regex": "(\\d+\\s*(?:minutes?|hours?|days?|weeks?|months?)\\s*ago)",
+      "require_list_date": true,
+      "fetch_details": true,
+      "detail_date_regex": "(\\d+\\s*(?:minutes?|hours?|days?|weeks?|months?)\\s*ago)",
+      "detail_text_start": "Job Overview",
+      "detail_text_end": "Similar Jobs",
+      "stop_when_older": true,
+      "delay_seconds": 1,
+      "enabled": true
+    },
+    {
+      "name": "Jobs.af",
+      "type": "html",
+      "render": true,
+      "url": "https://jobs.af/public/job",
+      "wait_for_selector": "a[href*=\"/public/job/\"]",
+      "item_selector": "a[href*=\"/public/job/\"]",
+      "item_href_regex": "/public/job/[^/?#]+/?$",
+      "card": true,
+      "title_selector": "h3",
+      "company_from_alt": "^(.*?)\\s+company logo$",
+      "date_regex": "(\\d+\\s*(?:minutes?|hours?|days?|weeks?|months?)\\s*ago)",
+      "max_pages": 16,
+      "stop_when_older": true,
+      "fetch_details": true,
+      "detail_wait_ms": 2500,
+      "detail_text_end": "A Ray of Hope for Afghanistan",
+      "delay_seconds": 1,
+      "enabled": true
+    }
+  ],
+  "telegram": {
+    "enabled": true,
+    "_mode_help": "web_preview = no login (public channels only). telethon = needs api_id/api_hash.",
+    "mode": "web_preview",
+    "channels": [
+      "https://t.me/afghanshahrkar",
+      "https://t.me/Herat_online_2"
+    ],
+    "max_pages_per_channel": 8,
+    "web_preview_base": "https://t.me/s/",
+    "api_id": 0,
+    "api_hash": "",
+    "session_name": "job_scraper_session",
+    "max_messages_per_channel": 500
+  },
+  "theme": "light",
+  "auto_scan_on_start": false,
+  "auto_scan_hours": 0,
+  "cache": {
+    "enabled": true,
+    "detail_days": 10,
+    "probe_hours": 24,
+    "file": "cache/scrape_cache.db"
+  }
+}

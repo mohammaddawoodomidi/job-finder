@@ -1,0 +1,954 @@
+<!doctype html>
+<html lang="en" data-theme="auto">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Job Finder</title>
+<style>
+:root{
+  --bg:#EDF0F7;--surface:#FFFFFF;--surface2:#F3F5FA;--ink:#0F1A36;--muted:#5A6786;--line:#DAE0EC;
+  --brand:#2447B8;--brand-ink:#FFFFFF;--brand-soft:#E4EBFF;--brand-line:#B9C8F5;
+  --rail:#0F1A3D;--rail-ink:#C9D3F2;--rail-dim:#8896C0;--rail-hover:rgba(255,255,255,.08);--rail-on:rgba(255,255,255,.14);
+  --gold:#F0A21A;--gold-soft:#FFF0CC;--gold-ink:#7A4E00;
+  --good:#17663A;--good-bg:#E0F4E8;--bad:#A12626;--bad-bg:#FCE7E7;--warn:#7A4E00;--warn-bg:#FFF0CC;
+  --shadow:0 1px 2px rgba(15,26,54,.06),0 6px 20px rgba(15,26,54,.05);
+  --r:10px;color-scheme:light}
+@media (prefers-color-scheme:dark){:root[data-theme=auto]{
+  --bg:#0A1022;--surface:#111A33;--surface2:#17223F;--ink:#E7ECFA;--muted:#98A5C6;--line:#25325A;
+  --brand:#8FA9FF;--brand-ink:#0A1230;--brand-soft:#1A2850;--brand-line:#31437F;
+  --rail:#070C1B;--rail-ink:#C9D3F2;--rail-dim:#7F8DB8;
+  --gold:#F4B73F;--gold-soft:#3A2B0C;--gold-ink:#F4C566;
+  --good:#74D69C;--good-bg:#12311F;--bad:#FF9E9E;--bad-bg:#3A1717;--warn:#F4C566;--warn-bg:#3A2B0C;
+  --shadow:0 1px 2px rgba(0,0,0,.5);color-scheme:dark}}
+:root[data-theme=dark]{
+  --bg:#0A1022;--surface:#111A33;--surface2:#17223F;--ink:#E7ECFA;--muted:#98A5C6;--line:#25325A;
+  --brand:#8FA9FF;--brand-ink:#0A1230;--brand-soft:#1A2850;--brand-line:#31437F;
+  --rail:#070C1B;--rail-ink:#C9D3F2;--rail-dim:#7F8DB8;
+  --gold:#F4B73F;--gold-soft:#3A2B0C;--gold-ink:#F4C566;
+  --good:#74D69C;--good-bg:#12311F;--bad:#FF9E9E;--bad-bg:#3A1717;--warn:#F4C566;--warn-bg:#3A2B0C;
+  --shadow:0 1px 2px rgba(0,0,0,.5);color-scheme:dark}
+*{box-sizing:border-box}
+html,body{height:100%}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:14.5px/1.5 "Segoe UI Variable Text","Segoe UI",system-ui,-apple-system,"Tahoma",sans-serif;overflow:hidden}
+button,input,select,textarea{font:inherit;color:inherit}
+h1,h2,h3{font-family:"Bahnschrift","Segoe UI Variable Display","Segoe UI",system-ui,sans-serif;font-weight:600;letter-spacing:-.005em}
+code{font:12.5px Consolas,monospace;background:var(--surface2);padding:.05rem .3rem;border-radius:4px}
+
+/* ---------- shell: rail + work area ---------- */
+.shell{display:grid;grid-template-columns:212px minmax(0,1fr);height:100vh}
+.rail{background:var(--rail);color:var(--rail-ink);display:flex;flex-direction:column;padding:14px 10px;gap:6px;min-height:0}
+.brand{display:flex;align-items:center;gap:10px;padding:4px 8px 14px}
+.brand svg{width:34px;height:34px;flex:none}
+.brand b{display:block;font:600 17px/1.1 "Bahnschrift","Segoe UI",sans-serif;color:#fff}
+.brand .ver{font-size:11.5px;color:var(--rail-dim)}
+nav.tabs{display:flex;flex-direction:column;gap:3px}
+nav.tabs button{display:flex;align-items:center;gap:11px;width:100%;text-align:left;background:none;border:0;border-radius:8px;padding:9px 10px;color:var(--rail-ink);cursor:pointer;position:relative}
+nav.tabs button svg{width:19px;height:19px;flex:none;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+nav.tabs button:hover{background:var(--rail-hover)}
+nav.tabs button[aria-selected=true]{background:var(--rail-on);color:#fff;font-weight:600}
+nav.tabs button[aria-selected=true]::before{content:"";position:absolute;left:-10px;top:8px;bottom:8px;width:4px;border-radius:0 4px 4px 0;background:var(--gold)}
+.rail .spacer{flex:1}
+.rail .seg{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.14)}
+.rail .seg button{color:var(--rail-ink);padding:5px 0;flex:1;font-size:12.5px}
+.rail .seg button+button{border-left-color:rgba(255,255,255,.14)}
+.rail .seg button[aria-pressed=true]{background:#fff;color:#0F1A3D}
+.rail .btn{background:transparent;border-color:rgba(255,255,255,.2);color:var(--rail-ink);justify-content:center}
+.rail .btn:hover{background:var(--rail-hover)}
+.rail .lbl{color:var(--rail-dim);margin:6px 4px 0}
+.work{min-width:0;min-height:0;display:flex;flex-direction:column}
+.pane{flex:1;min-height:0;display:flex;flex-direction:column;padding:14px 16px 14px;gap:10px;overflow:auto}
+.pane.scroll{overflow:auto}
+
+/* ---------- common parts ---------- */
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px;box-shadow:var(--shadow)}
+.card h2{font-size:15.5px;margin:0 0 10px}
+.card h2 small{font-weight:400;color:var(--muted);margin-left:6px;font-family:inherit}
+.row{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center}
+.row.top-align{align-items:flex-start}
+.grow{flex:1 1 14rem}
+.field{display:flex;flex-direction:column;gap:3px;min-width:8rem}
+.field>span,.lbl{font-size:12.5px;color:var(--muted)}
+input[type=text],input[type=number],input[type=password],input[type=email],input[type=search],select,textarea{width:100%;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:6px 9px;min-height:34px}
+input[type=number]{width:6.5rem}
+select{cursor:pointer}
+input:focus,select:focus,textarea:focus{border-color:var(--brand)}
+input[type=checkbox]{accent-color:var(--brand);width:16px;height:16px;margin:0}
+textarea{min-height:6rem;font:12.5px/1.45 Consolas,"Courier New",monospace}
+label.chk{display:inline-flex;gap:8px;align-items:center;cursor:pointer}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:6px 14px;min-height:34px;cursor:pointer;text-decoration:none;white-space:nowrap}
+.btn:hover{background:var(--surface2)}
+.btn.primary{background:var(--brand);border-color:var(--brand);color:var(--brand-ink);font-weight:600}
+.btn.primary:hover{filter:brightness(1.08);background:var(--brand)}
+.btn.danger{color:var(--bad)}
+.btn.small{padding:3px 10px;min-height:28px;font-size:13px}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+:focus-visible{outline:2px solid var(--brand);outline-offset:2px}
+.rail :focus-visible{outline-color:var(--gold)}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:var(--surface)}
+.seg button{border:0;background:none;padding:5px 12px;min-height:32px;cursor:pointer;color:var(--muted);white-space:nowrap}
+.seg button+button{border-left:1px solid var(--line)}
+.seg button:hover{background:var(--surface2)}
+.seg button[aria-pressed=true]{background:var(--brand);color:var(--brand-ink);font-weight:600}
+.hint{color:var(--muted);font-size:13px;margin:4px 0 0}
+.hidden{display:none!important}
+.banner{padding:8px 12px;border-radius:8px;font-size:13.5px;border:1px solid var(--line);flex:none}
+.banner.warn{background:var(--warn-bg);color:var(--warn);border-color:var(--warn)}
+.banner.bad{background:var(--bad-bg);color:var(--bad);border-color:var(--bad)}
+.banner.good{background:var(--good-bg);color:var(--good);border-color:var(--good)}
+.banner.info{background:var(--brand-soft);color:var(--ink);border-color:var(--brand-line)}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{display:inline-flex;gap:7px;align-items:center;border:1px solid var(--brand-line);border-radius:999px;padding:2px 11px 2px 9px;background:var(--brand-soft);font-size:13px;cursor:pointer}
+.chip.off{background:var(--surface);border-color:var(--line);color:var(--muted)}
+.badge{display:inline-block;border-radius:5px;padding:0 6px;font-size:11.5px;font-weight:600;line-height:18px;vertical-align:middle;background:var(--surface2);color:var(--muted);white-space:nowrap}
+.badge.new{background:var(--gold-soft);color:var(--gold-ink)}
+.badge.remote{background:var(--brand-soft);color:var(--brand)}
+.badge.ok{background:var(--good-bg);color:var(--good)}
+.badge.bad{background:var(--bad-bg);color:var(--bad)}
+.badge.warn{background:var(--warn-bg);color:var(--warn)}
+table{width:100%;border-collapse:collapse;font-size:13.5px}
+th,td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-weight:600;color:var(--muted)}
+.tablewrap{overflow-x:auto}
+.empty{text-align:center;color:var(--muted);padding:28px 16px}
+.preview{background:var(--surface2);border-radius:8px;padding:9px 12px;margin-top:10px}
+.preview ul{margin:4px 0 8px 18px;padding:0}
+#toasts{position:fixed;right:16px;bottom:16px;display:grid;gap:8px;z-index:50;max-width:min(26rem,calc(100vw - 2rem))}
+.toast{background:var(--ink);color:var(--bg);border-radius:8px;padding:9px 14px;box-shadow:var(--shadow);animation:in .18s ease}
+.toast.bad{background:var(--bad);color:#fff}
+@keyframes in{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+/* ---------- search: toolbar ---------- */
+.toolbar{display:flex;flex-wrap:wrap;gap:10px 18px;align-items:flex-end;padding:10px 14px;flex:none}
+.toolbar .field.src{flex:1 1 12rem;min-width:11rem}
+.toolbar .go{margin-left:auto}
+.toolbar .chips{max-height:64px;overflow:auto}
+.toolbar .go{display:flex;gap:8px;align-items:center}
+.toolbar .btn.primary{padding:6px 20px;min-height:38px;font-size:15px}
+.opts{position:relative}
+.opts>summary{list-style:none;cursor:pointer;padding:6px 10px;border:1px solid var(--line);border-radius:8px;min-height:34px;display:flex;align-items:center;gap:6px;background:var(--surface);color:var(--muted)}
+.opts>summary::-webkit-details-marker{display:none}
+.opts[open]>summary{border-color:var(--brand);color:var(--ink)}
+.opts .pop{position:absolute;right:0;top:40px;z-index:30;background:var(--surface);border:1px solid var(--line);border-radius:10px;box-shadow:0 10px 30px rgba(10,16,34,.25);padding:12px 14px;display:grid;gap:9px;width:21rem}
+.run{flex:none;padding:8px 14px}
+.progress{height:6px;border-radius:999px;background:var(--surface2);overflow:hidden}
+.progress>i{display:block;height:100%;width:0;background:var(--brand);transition:width .35s ease}
+.pstat{display:flex;justify-content:space-between;gap:16px;font-size:13px;color:var(--muted);margin-top:5px}
+.run summary{cursor:pointer;color:var(--brand);font-size:13px;margin-top:3px}
+#log{background:#0B1226;color:#CBD7F5;font:12px/1.45 Consolas,"Courier New",monospace;border-radius:8px;padding:8px 10px;height:9.5rem;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere;margin:6px 0 0}
+#log .w{color:#F2C46B}#log .e{color:#FF9A9A}
+
+/* ---------- search: results ---------- */
+#results{flex:1;min-height:420px;display:flex;flex-direction:column;gap:10px}
+.reshead{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;flex:none}
+.reshead h2{margin:0;font-size:17px}
+.reshead .acts{margin-left:auto;display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.reshead select{width:auto;min-height:30px;padding:2px 8px}
+.funnel{display:flex;flex-wrap:nowrap;align-items:center;font-size:12.5px;color:var(--muted);flex:none;overflow-x:auto;padding-bottom:2px;scrollbar-width:thin}
+.funnel .st{white-space:nowrap;flex:none}
+.funnel .st{display:inline-flex;align-items:baseline;gap:5px;padding:2px 10px;background:var(--surface);border:1px solid var(--line);border-left-width:0}
+.funnel .st:first-child{border-left-width:1px;border-radius:999px 0 0 999px;padding-left:12px}
+.funnel .st:last-of-type{border-radius:0 999px 999px 0;padding-right:12px}
+.funnel .st b{color:var(--ink);font-size:14px;font-variant-numeric:tabular-nums}
+.funnel .st.last{background:var(--brand-soft);border-color:var(--brand-line);color:var(--ink)}
+.funnel .badge{margin-left:8px}
+.srcpop{position:relative;margin-left:10px}
+.srcpop>summary{list-style:none;cursor:pointer;color:var(--brand);font-size:13px}
+.srcpop>summary::-webkit-details-marker{display:none}
+.srcpop .pop{position:absolute;left:0;top:26px;z-index:30;background:var(--surface);border:1px solid var(--line);border-radius:10px;box-shadow:0 10px 30px rgba(10,16,34,.25);padding:10px 12px;width:min(36rem,80vw)}
+.filterbar{display:flex;flex-wrap:wrap;gap:8px 10px;align-items:center;padding:8px 12px;flex:none}
+.filterbar .grow{flex:1 1 11rem;min-width:10rem}
+.filterbar select{width:auto;min-height:32px;padding:3px 6px;max-width:7.6rem}
+#f_lang{max-width:8.6rem}
+.filterbar .seg button{padding:5px 9px}
+.filterbar .btn.small{min-height:32px}
+.reshead .cnt{font-size:12.5px;color:var(--muted)}
+.split{flex:1;min-height:360px;display:grid;grid-template-columns:minmax(300px,2fr) minmax(0,3fr);gap:10px}
+.listcol,.detail{min-height:0;overflow:auto;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow)}
+.listcol{padding:6px;outline:none}
+.jrow{display:block;padding:9px 12px 9px 14px;border-radius:8px;cursor:pointer;position:relative;border:1px solid transparent}
+.jrow+.jrow{margin-top:2px}
+.jrow:hover{background:var(--surface2)}
+.jrow[aria-selected=true]{background:var(--brand-soft);border-color:var(--brand-line)}
+.jrow[aria-selected=true]::before{content:"";position:absolute;left:0;top:9px;bottom:9px;width:3px;border-radius:0 3px 3px 0;background:var(--brand)}
+.jrow.isnew::after{content:"";position:absolute;right:10px;top:12px;width:8px;height:8px;border-radius:50%;background:var(--gold)}
+.jrow .t{font-weight:600;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;padding-right:16px}
+.meta{display:flex;flex-wrap:wrap;align-items:center;color:var(--muted);font-size:12.8px;margin-top:2px}
+.meta span:not(:last-child)::after{content:"";display:inline-block;width:3px;height:3px;border-radius:50%;background:currentColor;opacity:.55;margin:0 8px;vertical-align:middle}
+.jrow .bd{margin-top:4px;display:flex;gap:5px;flex-wrap:wrap}
+.moreWrap{display:flex;justify-content:center;padding:8px}
+.detail{padding:16px 20px}
+.detail .ph{display:flex;gap:12px;align-items:flex-start}
+.detail h2{font-size:20px;line-height:1.25;margin:0;flex:1;overflow-wrap:anywhere}
+.detail .en{color:var(--muted);margin-top:2px}
+.detail .bd{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0 2px}
+.detail .why{margin:10px 0 0;padding:8px 12px;border-radius:8px;background:var(--surface2);font-size:13.5px}
+.facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(15rem,1fr));gap:12px;margin:14px 0}
+.fact{border:1px solid var(--line);border-radius:10px;padding:11px 14px}
+.fact h3{font-size:14px;margin:0 0 5px;color:var(--brand)}
+.fact p{margin:0;white-space:pre-wrap;overflow-wrap:anywhere;font-size:13.8px}
+.fact p.none{color:var(--muted)}
+.linkbox{display:flex;gap:8px;align-items:center;flex-wrap:wrap;background:var(--surface2);border-radius:10px;padding:9px 12px;margin:0 0 14px}
+.linkbox .v{flex:1 1 14rem;overflow-wrap:anywhere;font-size:13px}
+.detail h3.sec{font-size:14px;margin:14px 0 6px}
+.desc{white-space:pre-wrap;overflow-wrap:anywhere;font-size:13.8px;max-height:22rem;overflow:auto;background:var(--surface2);border-radius:8px;padding:10px 12px;margin:0 0 10px}
+.placeholder{display:grid;place-items:center;text-align:center;color:var(--muted);height:100%;padding:24px}
+.placeholder svg{width:56px;height:56px;opacity:.5;margin:0 auto 8px}
+#emptystate{flex:1;display:grid;place-items:center}
+#emptystate .box{text-align:center;color:var(--muted);max-width:26rem}
+#emptystate svg{width:92px;height:92px;margin:0 auto 10px;display:block}
+
+/* ---------- sources + settings ---------- */
+.two{display:grid;grid-template-columns:minmax(0,3fr) minmax(0,2fr);gap:14px;align-items:start}
+.srcrow{display:flex;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.srcrow:last-child{border-bottom:0}
+.srcrow .nm{flex:1 1 12rem;overflow-wrap:anywhere}
+.srcrow .nm small{display:block;color:var(--muted);font-size:12.5px}
+.masonry{columns:2 24rem;column-gap:14px;padding-top:14px}
+.masonry .card{break-inside:avoid;margin:0 0 14px;display:block}
+.setsave{position:sticky;top:0;z-index:5;margin:-14px -16px 0;padding:8px 16px;background:var(--bg);border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px}
+.setsave h1{font-size:17px;margin:0}
+.setsave .hint{margin:0 0 0 auto}
+@media (max-width:1100px){
+  .shell{grid-template-columns:64px minmax(0,1fr)}
+  .brand div,nav.tabs button span,.rail .lbl{display:none}
+  .brand{padding:4px 5px 12px;justify-content:center}
+  nav.tabs button{justify-content:center;padding:10px 0}
+  .rail .seg{flex-direction:column}
+  .rail .seg button+button{border-left:0;border-top:1px solid rgba(255,255,255,.14)}
+  nav.tabs button[aria-selected=true]::before{left:-10px}
+}
+@media (max-width:900px){.split{grid-template-columns:1fr;grid-template-rows:minmax(180px,1fr) minmax(0,1.4fr)}.two{grid-template-columns:1fr}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="shell">
+<aside class="rail">
+  <div class="brand">
+    <svg viewBox="0 0 1024 1024" aria-hidden="true"><defs><linearGradient id="bi-tile" x1="0.2" y1="0" x2="0.8" y2="1"><stop offset="0" stop-color="#18211D"/><stop offset="0.6" stop-color="#0D1311"/><stop offset="1" stop-color="#060908"/></linearGradient><radialGradient id="bi-glow" cx="0.5" cy="0.45" r="0.55"><stop offset="0" stop-color="#2BD68A" stop-opacity=".2"/><stop offset="1" stop-color="#2BD68A" stop-opacity="0"/></radialGradient><linearGradient id="bi-jg" gradientUnits="userSpaceOnUse" x1="0" y1="250" x2="0" y2="770"><stop offset="0" stop-color="#7DF5B8"/><stop offset="0.5" stop-color="#27C57A"/><stop offset="1" stop-color="#0F7E4C"/></linearGradient><linearGradient id="bi-edge" gradientUnits="userSpaceOnUse" x1="0" y1="250" x2="0" y2="770"><stop offset="0" stop-color="#E6FFF1" stop-opacity=".9"/><stop offset="0.35" stop-color="#E6FFF1" stop-opacity=".0"/></linearGradient><filter id="bi-sh" x="-30%" y="-30%" width="170%" height="170%"><feGaussianBlur stdDeviation="20"/></filter><clipPath id="bi-tileclip"><rect x="48" y="48" width="928" height="928" rx="224"/></clipPath></defs><rect x="48" y="48" width="928" height="928" rx="224" fill="url(#bi-tile)"/><rect x="48" y="48" width="928" height="928" rx="224" fill="url(#bi-glow)"/><rect x="52" y="52" width="920" height="920" rx="220" fill="none" stroke="#fff" stroke-opacity=".1" stroke-width="4"/><g clip-path="url(#bi-tileclip)"><g transform="translate(512 512) scale(1.5) translate(-480 -490)"><path d="M528 310H630V520A150 150 0 0 1 330 520V470H432V520A48 48 0 0 0 528 520Z" fill="#000" opacity=".6" filter="url(#bi-sh)" transform="translate(6 12)"/><path d="M528 310H630V520A150 150 0 0 1 330 520V470H432V520A48 48 0 0 0 528 520Z" fill="url(#bi-jg)"/><path d="M528 310H630V520A150 150 0 0 1 330 520V470H432V520A48 48 0 0 0 528 520Z" fill="none" stroke="url(#bi-edge)" stroke-width="3"/></g></g></svg>
+    <div><b>Job Finder</b><span class="ver" id="ver"></span></div>
+  </div>
+  <nav class="tabs" role="tablist" aria-label="Sections">
+    <button role="tab" id="tab-search" aria-selected="true" aria-controls="pane-search" title="Search"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg><span>Search</span></button>
+    <button role="tab" id="tab-sources" aria-selected="false" aria-controls="pane-sources" title="Sources"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M3.5 12h17M12 3.5c2.6 2.6 3.6 5.4 3.6 8.5s-1 5.9-3.6 8.5c-2.6-2.6-3.6-5.4-3.6-8.5s1-5.9 3.6-8.5z"/></svg><span>Sources</span></button>
+    <button role="tab" id="tab-settings" aria-selected="false" aria-controls="pane-settings" title="Settings"><svg viewBox="0 0 24 24"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/></svg><span>Settings</span></button>
+  </nav>
+  <div class="spacer"></div>
+  <div class="lbl">Theme</div>
+  <div class="seg" id="themeseg" role="group" aria-label="Theme">
+    <button type="button" data-theme="auto" aria-pressed="true" title="Follow Windows">Auto</button>
+    <button type="button" data-theme="light" aria-pressed="false">Light</button>
+    <button type="button" data-theme="dark" aria-pressed="false">Dark</button>
+  </div>
+  <button class="btn small hidden" id="quit" type="button"><span>Quit</span></button>
+</aside>
+
+<div class="work">
+<!-- ============================== SEARCH ============================== -->
+<section id="pane-search" class="pane" role="tabpanel" aria-labelledby="tab-search">
+  <div id="banner" class="banner hidden" role="status"></div>
+  <div class="card toolbar">
+    <div class="field"><span>Posted within (days)</span><div class="seg" id="daysseg" role="group" aria-label="Days"></div></div>
+    <div class="field"><span>Kind of job</span>
+      <div class="seg" id="modeseg" role="group" aria-label="Work mode">
+        <button type="button" data-mode="any" aria-pressed="true">Any</button>
+        <button type="button" data-mode="remote" aria-pressed="false">Remote</button>
+        <button type="button" data-mode="onsite" aria-pressed="false">On-site</button>
+      </div></div>
+    <div class="field src"><span>Sources</span><div class="chips" id="sources"></div></div>
+    <div class="go">
+      <details class="opts"><summary>Options</summary>
+        <div class="pop">
+          <label class="chk"><input type="checkbox" id="o_verify" checked> Check that application links still open</label>
+          <label class="chk"><input type="checkbox" id="o_force"> Download every page again, ignore remembered pages</label>
+          <label class="chk"><input type="checkbox" id="o_debug"> Save “rejected” and “duplicates” files</label>
+        </div></details>
+      <button class="btn primary" id="start" type="button">Find jobs</button>
+      <button class="btn" id="stop" type="button" disabled>Stop</button>
+    </div>
+  </div>
+  <div id="progresswrap" class="card run hidden">
+    <div class="progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" id="pbar"><i id="pfill"></i></div>
+    <div class="pstat"><span id="ptext">Starting…</span><span id="pelapsed"></span></div>
+    <details><summary>Show details</summary><div id="log" aria-live="off"></div></details>
+  </div>
+
+  <div id="results" class="hidden">
+    <div class="reshead">
+      <h2 id="resTitle">Results</h2><span class="cnt" id="f_count" aria-live="polite"></span>
+      <details class="srcpop" id="srcdetails"><summary id="srcsum">Sources</summary>
+        <div class="pop"><div class="tablewrap"><table><thead><tr><th>Source</th><th>Found</th><th>Time</th><th>Status</th></tr></thead><tbody id="srctable"></tbody></table></div></div></details>
+      <div class="acts">
+        <label class="lbl" for="history">Showing</label>
+        <select id="history" aria-label="Earlier results"></select>
+        <button class="btn small" id="openrep" type="button">Report</button>
+        <button class="btn small" id="opencsv" type="button">Excel</button>
+        <button class="btn small" id="openfolder" type="button">Folder</button>
+        <button class="btn small danger" id="delres" type="button">Delete</button>
+      </div>
+    </div>
+    <div class="funnel" id="funnel"></div>
+    <div class="card filterbar">
+      <input class="grow" type="search" id="f_q" placeholder="Filter: words, “phrases”, -exclude" title="Type words to keep. Use “quotes” for an exact phrase and -word to leave out jobs containing it." aria-label="Filter these jobs by keyword" autocomplete="off">
+      <div class="seg" id="f_modeseg" role="group" aria-label="Kind of job">
+        <button type="button" data-mode="" aria-pressed="true">All</button><button type="button" data-mode="remote" aria-pressed="false">Remote</button><button type="button" data-mode="onsite" aria-pressed="false">On-site</button></div>
+      <select id="f_source" aria-label="Source"><option value="">All sources</option></select>
+      <select id="f_lang" aria-label="Language"><option value="">All languages</option></select>
+      <select id="f_sort" aria-label="Sort"><option value="newest">Newest first</option><option value="new">New first</option><option value="title">Title A–Z</option><option value="company">Company A–Z</option></select>
+      <label class="chk" id="f_newwrap"><input type="checkbox" id="f_new"> New only</label>
+      <button class="btn small" id="f_clear" type="button">Clear</button>
+    </div>
+    <div class="split">
+      <div class="listcol" id="listcol" tabindex="0" aria-label="Jobs. Use the up and down arrow keys to move between them.">
+        <div id="list" role="listbox"></div>
+        <div class="moreWrap"><button class="btn hidden" id="more" type="button">Show more</button></div>
+      </div>
+      <div class="detail" id="detail" aria-live="polite"></div>
+    </div>
+  </div>
+  <div id="emptystate"><div class="box">
+    <svg viewBox="0 0 64 64" aria-hidden="true"><circle cx="27" cy="27" r="16" fill="none" stroke="currentColor" stroke-width="4" opacity=".5"/><path d="M39 39l14 14" stroke="#F0A21A" stroke-width="7" stroke-linecap="round"/><path d="M20 28l5 5 10-12" fill="none" stroke="#F0A21A" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    <h2 style="margin:0 0 4px;color:var(--ink)">No results yet</h2>
+    <p style="margin:0">Choose how far back to look and which sources to read, then press <b>Find jobs</b>.</p>
+  </div></div>
+</section>
+
+<!-- ============================== SOURCES ============================== -->
+<section id="pane-sources" class="pane scroll hidden" role="tabpanel" aria-labelledby="tab-sources">
+  <div class="two">
+    <div class="card">
+      <h2>Websites <small id="siteCount"></small></h2>
+      <div id="sitelist"></div>
+      <h2 style="margin-top:16px">Add a website</h2>
+      <div class="row">
+        <label class="field grow"><span>Address of the page that lists the jobs</span><input type="text" id="addsite_url" placeholder="https://example.com/jobs" autocomplete="off"></label>
+        <button class="btn primary" id="addsite_check" type="button" style="align-self:flex-end">Check address</button>
+      </div>
+      <div id="addsite_out" class="preview hidden"></div>
+      <p class="hint">Job Finder works out how to read the site (job feed, structured data or a list of links) and shows a preview before anything is added.</p>
+    </div>
+    <div class="card">
+      <h2>Telegram channels <small id="chanCount"></small></h2>
+      <label class="chk" style="margin-bottom:8px"><input type="checkbox" id="t_enabled"> Read Telegram channels in searches</label>
+      <div id="chanlist"></div>
+      <div class="row" style="margin-top:12px">
+        <label class="field grow"><span>Add a public channel (link or @name)</span><input type="text" id="addchan" placeholder="https://t.me/channel_name" autocomplete="off"></label>
+        <button class="btn primary" id="addchan_btn" type="button" style="align-self:flex-end">Check and add</button>
+      </div>
+      <div id="addchan_out" class="hint"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================== SETTINGS ============================== -->
+<section id="pane-settings" class="pane scroll hidden" role="tabpanel" aria-labelledby="tab-settings">
+  <div class="setsave"><h1>Settings</h1><span class="hint" id="savestate">Changes are saved automatically.</span></div>
+  <div class="masonry">
+    <div class="card"><h2>What counts as a match</h2>
+      <fieldset style="border:1px solid var(--line);border-radius:8px;margin:0 0 12px"><legend class="lbl">Accepted languages</legend>
+        <div class="row"><label class="chk"><input type="checkbox" class="lang" value="en"> English</label><label class="chk"><input type="checkbox" class="lang" value="fa"> Persian / Dari</label><label class="chk"><input type="checkbox" class="lang" value="tr"> Turkish</label></div></fieldset>
+      <div class="row top-align" style="gap:8px 18px">
+        <label class="chk"><input type="checkbox" id="s_intern"> Internships and trainee roles</label>
+        <label class="chk"><input type="checkbox" id="s_junior"> “Junior” titles</label>
+        <label class="chk"><input type="checkbox" id="s_nofemale"> Hide jobs only women can apply to</label>
+      </div>
+      <div class="row top-align" style="margin-top:12px">
+        <label class="field" style="min-width:12rem"><span>Years of experience allowed (0 = none)</span><input type="number" id="s_years" min="0" max="10" step="1"></label>
+        <div class="field"><span>Default kind of job</span><div class="seg" id="s_modeseg" role="group"><button type="button" data-mode="any" aria-pressed="true">Any</button><button type="button" data-mode="remote" aria-pressed="false">Remote</button><button type="button" data-mode="onsite" aria-pressed="false">On-site</button></div></div>
+      </div>
+      <label class="field" style="margin-top:12px"><span>Only these places (comma-separated, empty = anywhere)</span><input type="text" id="s_loc" placeholder="kabul, herat, istanbul"></label>
+      <label class="chk" style="margin-top:8px"><input type="checkbox" id="s_remote"> Always include remote jobs when places are set</label>
+    </div>
+    <div class="card"><h2>Words and companies to skip or favour</h2>
+      <label class="field"><span>Extra “entry-level” words (comma-separated)</span><input type="text" id="s_inc"></label>
+      <label class="field" style="margin-top:10px"><span>Words that exclude a job title (comma-separated)</span><input type="text" id="s_exc"></label>
+      <label class="field" style="margin-top:10px"><span>Companies to never show (comma-separated, e.g. Acme, Foo Ltd)</span><input type="text" id="s_excomp"></label>
+    </div>
+    <div class="card"><h2>Updates</h2>
+      <label class="chk"><input type="checkbox" id="s_auto"> Look for new postings every time Job Finder starts</label>
+      <label class="field" style="margin-top:10px;max-width:16rem"><span>…and again every (hours, 0 = off)</span><input type="number" id="s_autohours" min="0" max="48" step="1"></label>
+      <div class="row" style="margin-top:12px">
+        <label class="chk"><input type="checkbox" id="s_cache"> Remember job pages and link checks</label>
+        <button class="btn small" id="clearcache" type="button">Forget remembered pages</button><span class="hint" id="cachesize" style="margin:0"></span>
+      </div>
+    </div>
+    <div class="card"><h2>Behaviour</h2>
+      <label class="field"><span>Your contact e-mail (sent to websites as good manners)</span><input type="email" id="s_email"></label>
+      <div class="row top-align" style="margin-top:10px">
+        <label class="field" style="min-width:8rem"><span>Default days (max 7)</span><input type="number" id="s_days" min="0.5" max="7" step="0.5"></label>
+        <label class="field" style="min-width:8rem"><span>Sources at once</span><input type="number" id="s_parallel" min="1" max="16" step="1"></label>
+        <label class="field" style="min-width:11rem"><span>Seconds between requests</span><input type="number" id="s_delay" min="0.2" step="0.1"></label>
+      </div>
+      <div class="row" style="margin-top:12px;gap:8px 18px"><label class="chk"><input type="checkbox" id="s_robots"> Respect robots.txt</label>
+        <label class="chk"><input type="checkbox" id="s_dedupe"> Merge the same opening found on several sources</label>
+        <label class="chk"><input type="checkbox" id="s_verify"> Check application links by default</label></div>
+    </div>
+    <div class="card"><h2>Translation (optional)</h2>
+      <label class="field"><span>Backend</span><select id="tr_backend"><option value="none">none</option><option value="argos">argos (offline, needs argostranslate)</option><option value="libretranslate">libretranslate (your own server)</option></select></label>
+      <label class="field" style="margin-top:10px"><span>LibreTranslate address</span><input type="text" id="tr_url"></label>
+    </div>
+    <div class="card"><h2>Your files</h2>
+      <p class="hint" style="margin-top:0">Settings, results, remembered pages and logs are stored in <code id="datadir"></code></p>
+      <div class="row" style="margin-top:8px"><button class="btn small" id="opendata" type="button">Open that folder</button></div>
+    </div>
+    <div class="card"><details><summary style="cursor:pointer"><b>Advanced:</b> all settings as text</summary>
+      <textarea id="raw" spellcheck="false" style="min-height:14rem;margin-top:10px"></textarea>
+      <div class="row" style="margin-top:6px"><button class="btn small" id="applyraw" type="button">Apply text</button></div></details></div>
+  </div>
+</section>
+</div>
+</div>
+<div id="toasts" aria-live="polite"></div>
+
+<script>
+"use strict";
+/*PURE-START*/
+function norm(s) { return String(s == null ? "" : s).toLowerCase().replace(/\u064a/g, "\u06cc").replace(/\u0643/g, "\u06a9").replace(/[\u200c\u200d]/g, ""); }
+function parseQuery(q) {
+  var terms = [], not = [], re = /(-?)"([^"]+)"|(-?)(\S+)/g, m;
+  while ((m = re.exec(q || ""))) {
+    var neg = (m[1] || m[3]) === "-", t = norm(m[2] || m[4]).trim();
+    if (t && t !== "-") (neg ? not : terms).push(t);  // a lone "-" is a half-typed exclusion: ignore it
+  }
+  return {terms: terms, not: not};
+}
+function hay(j) {
+  if (j._h === undefined) j._h = norm([j.title, j.title_en, j.company, j.location, j.source, j.description, j.requirements, j.submission, j.summary_en].join(" \n "));
+  return j._h;
+}
+function filterJobs(jobs, f) {
+  var q = parseQuery(f.q || "");
+  return jobs.filter(function (j) {
+    if (f.mode === "remote" && !j.remote) return false;
+    if (f.mode === "onsite" && j.remote) return false;
+    if (f.newOnly && !j.is_new) return false;
+    if (f.lang && j.language !== f.lang) return false;
+    if (f.source && j.source !== f.source && !(j.also_on || []).some(function (d) { return d.source === f.source; })) return false;
+    var h = hay(j), i;
+    for (i = 0; i < q.terms.length; i++) if (h.indexOf(q.terms[i]) < 0) return false;
+    for (i = 0; i < q.not.length; i++) if (h.indexOf(q.not[i]) >= 0) return false;
+    return true;
+  });
+}
+function sortJobs(list, how) {
+  var a = list.slice(), age = function (j) { return j.age_hours == null ? 1e9 : j.age_hours; };
+  if (how === "title") a.sort(function (x, y) { return x.title.localeCompare(y.title); });
+  else if (how === "company") a.sort(function (x, y) { return (x.company || "\uffff").localeCompare(y.company || "\uffff"); });
+  else if (how === "new") a.sort(function (x, y) { return (y.is_new - x.is_new) || (age(x) - age(y)); });
+  else a.sort(function (x, y) { return age(x) - age(y); });
+  return a;
+}
+function timeAgo(h) {
+  if (h == null) return "";
+  if (h < 1) return Math.max(1, Math.round(h * 60)) + " min ago";
+  if (h < 48) return Math.round(h) + " h ago";
+  return Math.round(h / 24) + " days ago";
+}
+function progressInfo(p) {
+  p = p || {};
+  var f = p.total > 0 ? Math.min(1, p.done / p.total) : 0, st = p.stage;
+  if (st === "sources") return {pct: 2 + 66 * f, text: "Reading sources " + p.done + "/" + p.total + (p.label ? " · " + p.label : "")};
+  if (st === "filter") return {pct: 70 + 4 * f, text: "Filtering and merging duplicates…"};
+  if (st === "links") return {pct: 74 + 22 * f, text: "Checking application links " + p.done + "/" + p.total};
+  if (st === "write") return {pct: 96 + 4 * f, text: "Saving results…"};
+  return {pct: 1, text: "Starting…"};
+}
+/*PURE-END*/
+
+var $ = function (id) { return document.getElementById(id); };
+var prefs = {}, prefTimer = null;
+function setPref(k, v) { prefs[k] = v; clearTimeout(prefTimer); prefTimer = setTimeout(function () { api("/api/prefs", {prefs: prefs}); }, 400); }
+var cfg = null, env = {}, since = 0, poller = null, lastStatus = "idle", scanOpts = null;
+var cur = {name: "", data: null, jobs: []}, limit = 40, reports = [], sourceStats = {}, finishedAt = 0, saveTimer = null, autoStarted = false;
+
+function el(tag, props, kids) {
+  var e = document.createElement(tag);
+  Object.keys(props || {}).forEach(function (k) { if (k === "text") e.textContent = props[k]; else e[k] = props[k]; });
+  (kids || []).forEach(function (c) { e.appendChild(typeof c === "string" ? document.createTextNode(c) : c); });
+  return e;
+}
+function api(path, body) {
+  var opt = body === undefined ? {} : {method: "POST", headers: {"Content-Type": "application/json", "X-Requested-With": "jobfinder"}, body: JSON.stringify(body)};
+  return fetch(path, opt).then(function (r) { return r.json(); }).catch(function () {
+    toast("Lost the connection to the program. Close and reopen Job Finder.", true);
+    return {ok: false, error: "no connection"};
+  });
+}
+function toast(text, bad) {
+  var t = el("div", {className: "toast" + (bad ? " bad" : ""), text: text});
+  $("toasts").appendChild(t);
+  setTimeout(function () { t.remove(); }, bad ? 7000 : 3500);
+}
+function banner(text, kind) { var b = $("banner"); b.textContent = text || ""; b.className = "banner " + (kind || "info") + (text ? "" : " hidden"); }
+function g(o, path, d) { var c = o; for (var i = 0; i < path.length; i++) { if (c == null || typeof c !== "object") return d; c = c[path[i]]; } return c == null ? d : c; }
+function put(path, v) { var c = cfg; for (var i = 0; i < path.length - 1; i++) { if (typeof c[path[i]] !== "object" || c[path[i]] === null) c[path[i]] = {}; c = c[path[i]]; } c[path[path.length - 1]] = v; }
+function csvList(s) { return s.split(",").map(function (x) { return x.trim(); }).filter(Boolean); }
+function num(id, d) { var v = parseFloat($(id).value); return isNaN(v) ? d : v; }
+function openThing(kind, name) { api("/api/open", {kind: kind, name: name || ""}).then(function (r) { if (r && r.ok === false) toast(r.error || "Could not open.", true); }); }
+function openUrl(u) { api("/api/open-url", {url: u}).then(function (r) { if (r && r.ok === false) toast(r.error || "Could not open the link.", true); }); }
+function copyText(t) {
+  var done = function () { toast("Copied"); };
+  if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(t).then(done, function () { toast("Could not copy", true); });
+  else { var ta = el("textarea", {value: t}); document.body.appendChild(ta); ta.select(); try { document.execCommand("copy"); done(); } catch (e) { toast("Could not copy", true); } ta.remove(); }
+}
+function setSeg(seg, attr, val) { seg.querySelectorAll("button").forEach(function (b) { b.setAttribute("aria-pressed", b.getAttribute(attr) === val ? "true" : "false"); }); }
+function segValue(seg, attr) { var b = seg.querySelector("button[aria-pressed=true]"); return b ? b.getAttribute(attr) : ""; }
+function onSeg(seg, attr, fn) { seg.addEventListener("click", function (e) { var b = e.target.closest("button"); if (!b) return; setSeg(seg, attr, b.getAttribute(attr)); fn(b.getAttribute(attr)); }); }
+
+/* ---------------- theme + tabs ---------------- */
+function applyTheme(mode) {
+  document.documentElement.setAttribute("data-theme", mode);
+  try { if (typeof cfg === "object" && cfg) cfg.theme = mode; } catch (e) {}
+  // remembered by the program itself (the page's address changes every start, so browser storage would be forgotten)
+  fetch("/api/theme", {method: "POST", headers: {"Content-Type": "application/json", "X-Requested-With": "jobfinder"}, body: JSON.stringify({theme: mode})}).catch(function () {});
+  setSeg($("themeseg"), "data-theme", mode);
+}
+onSeg($("themeseg"), "data-theme", applyTheme);
+setSeg($("themeseg"), "data-theme", document.documentElement.getAttribute("data-theme"));
+["search", "sources", "settings"].forEach(function (n) {
+  $("tab-" + n).addEventListener("click", function () {
+    setPref("tab", n);
+    ["search", "sources", "settings"].forEach(function (m) { $("tab-" + m).setAttribute("aria-selected", m === n ? "true" : "false"); $("pane-" + m).classList.toggle("hidden", m !== n); });
+  });
+});
+$("quit").addEventListener("click", function () {
+  if (!confirm("Stop Job Finder?")) return;
+  api("/api/quit", {}).then(function () { document.body.textContent = "Job Finder has stopped. You can close this tab."; });
+});
+document.addEventListener("keydown", function (e) {
+  if (e.key === "/" && !/^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement.tagName) && !$("results").classList.contains("hidden")) { e.preventDefault(); $("f_q").focus(); }
+});
+
+/* ---------------- configuration ---------------- */
+function loadConfig() {
+  return api("/api/config").then(function (d) {
+    if (d.error) { banner(d.error, "bad"); return; }
+    cfg = d.config; env = d.env || {};
+    $("ver").textContent = env.version ? "v" + env.version : "";
+    $("quit").classList.toggle("hidden", !!env.desktop);
+    $("datadir").textContent = env.data_dir || "";
+    renderAll();
+  });
+}
+function saveConfig(quiet) {
+  clearTimeout(saveTimer);
+  $("savestate").textContent = "Saving…";
+  return api("/api/config", {config: cfg}).then(function (r) {
+    if (r.ok) { $("savestate").textContent = "Saved."; if (!quiet) toast("Saved"); return true; }
+    $("savestate").textContent = "Not saved.";
+    toast(r.error || "Could not save the settings.", true);
+    return false;
+  });
+}
+function autosave() { $("savestate").textContent = "Saving…"; clearTimeout(saveTimer); saveTimer = setTimeout(function () { saveConfig(true); syncRaw(); renderSearchControls(); }, 500); }
+function syncRaw() { $("raw").value = JSON.stringify(cfg, null, 2); }
+function renderAll() { renderSearchControls(); renderSources(); renderSettings(); }
+
+/* ---------------- search controls ---------------- */
+var DAY_CHOICES = [1, 2, 3, 5, 7];
+function renderSearchControls() {
+  var days = Math.min(7, g(cfg, ["max_age_days"], 7)), seg = $("daysseg"), keep = segValue(seg, "data-days") || (prefs.days != null ? String(prefs.days) : "");
+  var choices = DAY_CHOICES.concat(DAY_CHOICES.indexOf(days) < 0 ? [days] : []).sort(function (a, b) { return a - b; });
+  var chosen = choices.indexOf(Number(keep)) >= 0 && keep !== "" ? Number(keep) : days;
+  seg.textContent = "";
+  choices.forEach(function (d) {
+    var b = el("button", {type: "button", text: String(d)}); b.title = d + (d === 1 ? " day" : " days");
+    b.setAttribute("data-days", d); b.setAttribute("aria-pressed", String(d === chosen)); seg.appendChild(b);
+  });
+  if (!seg._bound) { seg._bound = true; onSeg(seg, "data-days", function (v) { setPref("days", Number(v)); }); }
+  if (!$("modeseg")._init) { $("modeseg")._init = true; setSeg($("modeseg"), "data-mode", prefs.mode || g(cfg, ["filters", "work_mode"], "any")); onSeg($("modeseg"), "data-mode", function (v) { setPref("mode", v); }); }
+  $("o_verify").checked = g(cfg, ["filters", "verify_links"], true);
+  var box = $("sources"), prev = {};
+  box.querySelectorAll("input").forEach(function (c) { prev[c.value] = c.checked; });
+  box.textContent = "";
+  var add = function (value, text) {
+    var on = prev[value] !== undefined ? prev[value] : (prefs.off || []).indexOf(value) < 0;
+    var cb = el("input", {type: "checkbox", value: value, checked: on});
+    var chip = el("label", {className: "chip"}, [cb, el("span", {text: text})]);
+    cb.addEventListener("change", function () {
+      chip.classList.toggle("off", !cb.checked);
+      var off = (prefs.off || []).filter(function (n) { return n !== value; }); if (!cb.checked) off.push(value); setPref("off", off);
+    });
+    chip.classList.toggle("off", !cb.checked); box.appendChild(chip);
+  };
+  (cfg.websites || []).filter(function (s) { return s.enabled !== false; }).forEach(function (s) { add(s.name, s.name); });
+  var chans = g(cfg, ["telegram", "channels"], []);
+  if (g(cfg, ["telegram", "enabled"], false) && chans.length) add("telegram", "Telegram (" + chans.length + ")");
+  if (!box.children.length) box.appendChild(el("span", {className: "hint", text: "No sources yet: add some in the Sources tab."}));
+  $("start").disabled = !box.querySelector("input") || lastStatus === "running";
+}
+function selectedSources() {
+  var all = [], on = [];
+  $("sources").querySelectorAll("input").forEach(function (c) { all.push(c); if (c.checked) on.push(c.value); });
+  return on.length === all.length ? null : on;
+}
+function startScan(auto) {
+  var only = selectedSources();
+  if (only && !only.length) { toast("Tick at least one source.", true); return; }
+  var days = parseFloat(segValue($("daysseg"), "data-days"));
+  var body = {days: isNaN(days) ? null : days, work_mode: segValue($("modeseg"), "data-mode") || "any", verify: $("o_verify").checked,
+    debug: $("o_debug").checked, force_refresh: $("o_force").checked};
+  if (only) body.only = only;
+  return api("/api/scan", body).then(function (r) {
+    if (!r.ok) { if (!auto) toast(r.error || "Could not start.", true); return; }
+    since = 0; $("log").textContent = ""; $("progresswrap").classList.remove("hidden");
+    scanOpts = {auto: !!auto};
+    banner(auto ? "Checking your sources for new postings…" : "", "info");
+    startPolling();
+  });
+}
+$("start").addEventListener("click", function () { startScan(false); });
+$("stop").addEventListener("click", function () { api("/api/stop", {}); $("stop").disabled = true; });
+
+function startPolling() { if (!poller) poller = setInterval(poll, 700); poll(); }
+function appendLog(lines) {
+  var log = $("log"), stick = log.scrollTop + log.clientHeight >= log.scrollHeight - 30;
+  lines.forEach(function (ln) { var d = el("div", {text: ln}); if (/\bERROR\b|Traceback/.test(ln)) d.className = "e"; else if (/\bWARNING\b/.test(ln)) d.className = "w"; log.appendChild(d); });
+  if (stick) log.scrollTop = log.scrollHeight;
+}
+function fmt(sec) { return Math.floor(sec / 60) + ":" + ("0" + (sec % 60)).slice(-2); }
+function poll() {
+  api("/api/status?since=" + since).then(function (s) {
+    if (s.status === undefined) return;
+    if (s.lines && s.lines.length) appendLog(s.lines);
+    since = s.total;
+    var running = s.status === "running";
+    if (running && !poller) poller = setInterval(poll, 700);
+    $("start").disabled = running || !$("sources").querySelector("input"); $("stop").disabled = !running;
+    if (running) {
+      $("progresswrap").classList.remove("hidden");
+      var pi = progressInfo(s.progress);
+      $("pfill").style.width = pi.pct.toFixed(1) + "%"; $("pbar").setAttribute("aria-valuenow", Math.round(pi.pct));
+      $("ptext").textContent = pi.text; $("pelapsed").textContent = fmt(s.elapsed || 0);
+    } else {
+      if (poller) { clearInterval(poller); poller = null; }
+      if (lastStatus === "running") finishScan(s);
+    }
+    lastStatus = s.status;
+  });
+}
+function finishScan(s) {
+  $("pfill").style.width = s.status === "done" ? "100%" : "0%";
+  $("pelapsed").textContent = fmt(s.elapsed || 0);
+  finishedAt = Date.now();
+  if (s.status === "done" && s.result) {
+    $("ptext").textContent = "Done.";
+    var r = s.result;
+    if (r.offline) banner("No answer from any source. Check your internet connection, then search again.", "bad");
+    else if (r.new_count) banner(r.new_count + " new posting" + (r.new_count === 1 ? "" : "s") + " since your last search.", "good");
+    else banner(scanOpts && scanOpts.auto ? "You are up to date: no new postings since your last search." : "", "info");
+    return refreshReports().then(function () { return loadResult(r.json); });
+  }
+  if (s.status === "cancelled") { $("ptext").textContent = "Stopped."; banner("", ""); }
+  if (s.status === "error") { $("ptext").textContent = "Failed."; banner("The search failed: " + s.error, "bad"); }
+}
+
+/* ---------------- results ---------------- */
+function refreshReports() {
+  return api("/api/reports").then(function (d) {
+    reports = d.reports || [];
+    var sel = $("history"); sel.textContent = "";
+    reports.forEach(function (r) { sel.appendChild(el("option", {value: r.name, text: r.time})); });
+    if (cur.name) sel.value = cur.name;
+  });
+}
+function loadResult(name) {
+  return api("/api/results?name=" + encodeURIComponent(name)).then(function (d) {
+    if (d.error) { toast(d.error, true); return; }
+    cur = {name: name, data: d, jobs: d.jobs || []};
+    sourceStats = {}; (d.sources || []).forEach(function (s) { sourceStats[s.name] = s; });
+    $("history").value = name;
+    limit = 40; renderResults(); renderSources();
+  });
+}
+function renderResults() {
+  var d = cur.data;
+  $("emptystate").classList.toggle("hidden", !!d);
+  $("results").classList.toggle("hidden", !d);
+  if (!d) return;
+  var rep = reports.filter(function (r) { return r.name === cur.name; })[0] || {};
+  $("openrep").disabled = !rep.html; $("opencsv").disabled = !rep.csv;
+  var newCount = cur.jobs.filter(function (j) { return j.is_new; }).length;
+  $("resTitle").textContent = cur.jobs.length + " job" + (cur.jobs.length === 1 ? "" : "s") + (newCount ? ", " + newCount + " new" : "");
+  var f = $("funnel"); f.textContent = ""; var fun = d.funnel || [];
+  fun.forEach(function (p, i) { f.appendChild(el("span", {className: "st" + (i === fun.length - 1 ? " last" : "")}, [el("b", {text: String(p[1])}), p[0]])); });
+  if (d.work_mode && d.work_mode !== "any") f.appendChild(el("span", {className: "badge remote", text: d.work_mode === "remote" ? "remote only" : "on-site only"}));
+  renderSourceTable(d);
+  if (!filtersRestored) {  // the kind / sort / "new only" choices of last time
+    filtersRestored = true; var pf = prefs.f || {};
+    if (pf.sort && $("f_sort").querySelector('option[value="' + pf.sort + '"]')) $("f_sort").value = pf.sort;
+    if (pf.mode === "remote" || pf.mode === "onsite") setSeg($("f_modeseg"), "data-mode", pf.mode);
+    $("f_new").checked = !!pf.newOnly;
+  }
+  fillSelect($("f_source"), uniq(cur.jobs.reduce(function (a, j) { return a.concat([j.source], (j.also_on || []).map(function (x) { return x.source; })); }, [])), "All sources");
+  fillSelect($("f_lang"), uniq(cur.jobs.map(function (j) { return j.language; })), "All languages");
+  renderList();
+}
+function uniq(a) { return a.filter(function (x, i) { return x && a.indexOf(x) === i; }).sort(); }
+function fillSelect(sel, values, allText) {
+  var keep = sel.value; sel.textContent = ""; sel.appendChild(el("option", {value: "", text: allText}));
+  values.forEach(function (v) { sel.appendChild(el("option", {value: v, text: v})); }); if (values.indexOf(keep) >= 0) sel.value = keep;
+}
+function renderSourceTable(d) {
+  var body = $("srctable"); body.textContent = "";
+  var bad = 0;
+  (d.sources || []).forEach(function (s) {
+    var st = s.error ? el("span", {className: "badge bad", text: "failed"}) : s.found === 0 ? el("span", {className: "badge warn", text: "nothing found"}) : el("span", {className: "badge ok", text: "ok"});
+    if (s.error || s.found === 0) bad++;
+    var note = s.error || (s.found === 0 ? "The site may be down, blocking requests, or its layout changed." : "");
+    body.appendChild(el("tr", {}, [el("td", {text: s.name}), el("td", {text: String(s.found)}), el("td", {text: s.seconds + " s"}), el("td", {}, [st, note ? el("div", {className: "hint", text: note}) : ""])]));
+  });
+  $("srcsum").textContent = "Sources (" + (d.sources || []).length + ")" + (bad ? " · " + bad + " need attention" : "");
+  $("srcsum").style.color = bad ? "var(--warn)" : "";
+}
+function readFilters() {
+  return {q: $("f_q").value, mode: segValue($("f_modeseg"), "data-mode"), source: $("f_source").value, lang: $("f_lang").value, newOnly: $("f_new").checked, sort: $("f_sort").value};
+}
+var filterTimer = null;
+function saveFilterPrefs() { var f = readFilters(); setPref("f", {mode: f.mode, sort: f.sort, newOnly: f.newOnly}); }
+function onFilter() { saveFilterPrefs(); clearTimeout(filterTimer); filterTimer = setTimeout(function () { limit = 40; renderList(); }, 120); }
+$("f_q").addEventListener("input", onFilter);
+["f_source", "f_lang", "f_sort", "f_new"].forEach(function (id) { $(id).addEventListener("change", onFilter); });
+onSeg($("f_modeseg"), "data-mode", onFilter);
+$("f_clear").addEventListener("click", function () { $("f_q").value = ""; $("f_source").value = ""; $("f_lang").value = ""; $("f_new").checked = false; setSeg($("f_modeseg"), "data-mode", ""); saveFilterPrefs(); limit = 40; renderList(); });
+$("more").addEventListener("click", function () { limit += 40; renderList(); });
+var selected = null, shown = [], filtersRestored = false;
+function renderList() {
+  var f = readFilters(), list = sortJobs(filterJobs(cur.jobs, f), f.sort), box = $("list");
+  box.textContent = "";
+  $("f_newwrap").classList.toggle("hidden", !cur.jobs.some(function (j) { return j.is_new; }));
+  $("f_count").textContent = list.length === cur.jobs.length ? "" : "showing " + list.length + " of " + cur.jobs.length;
+  if (!list.length) box.appendChild(el("div", {className: "empty", text: cur.jobs.length ? "No job matches these filters." : "This search found no matching jobs."}));
+  shown = list.slice(0, limit);
+  shown.forEach(function (j) { box.appendChild(jobRow(j)); });
+  $("more").classList.toggle("hidden", list.length <= limit);
+  $("more").textContent = "Show more (" + Math.max(0, list.length - limit) + " left)";
+  if (!selected || shown.indexOf(selected) < 0) selected = shown[0] || null;
+  markSelected(false); showDetail(selected);
+}
+function markSelected(scroll) {
+  $("list").querySelectorAll(".jrow").forEach(function (r) {
+    var on = r._job === selected; r.setAttribute("aria-selected", on ? "true" : "false");
+    if (on && scroll) r.scrollIntoView({block: "nearest"});
+  });
+}
+function pick(j, scroll) { selected = j; markSelected(scroll); showDetail(j); }
+$("listcol").addEventListener("keydown", function (e) {
+  if (!shown.length || ["ArrowDown", "ArrowUp", "Home", "End"].indexOf(e.key) < 0) return;
+  e.preventDefault();
+  var i = shown.indexOf(selected);
+  i = e.key === "ArrowDown" ? Math.min(shown.length - 1, i + 1) : e.key === "ArrowUp" ? Math.max(0, i - 1) : e.key === "Home" ? 0 : shown.length - 1;
+  pick(shown[i], true);
+});
+function badgesFor(j) {
+  var b = [];
+  if (j.is_new) b.push(el("span", {className: "badge new", text: "New"}));
+  if (j.remote) b.push(el("span", {className: "badge remote", text: "Remote"}));
+  if (j.gender_checked === false) b.push(el("span", {className: "badge warn", title: "The job page could not be read, so a women-only requirement could not be ruled out", text: "Gender not verified"}));
+  if (j.language && j.language !== "en") b.push(el("span", {className: "badge", text: j.language}));
+  return b;
+}
+function metaFor(j) {
+  var parts = [j.company, j.location, timeAgo(j.age_hours), j.source + ((j.also_on || []).length ? " +" + j.also_on.length : "")].filter(Boolean);
+  return el("div", {className: "meta"}, parts.map(function (t) { return el("span", {text: t}); }));
+}
+function jobRow(j) {
+  var r = el("div", {className: "jrow" + (j.is_new ? " isnew" : "")}), t = el("div", {className: "t", text: j.title}), bd = badgesFor(j);
+  t.dir = "auto"; r.setAttribute("role", "option"); r._job = j;
+  r.appendChild(t); r.appendChild(metaFor(j));
+  if (bd.length) r.appendChild(el("div", {className: "bd"}, bd));
+  r.addEventListener("click", function () { pick(j, false); $("listcol").focus({preventScroll: true}); });
+  return r;
+}
+function showDetail(j) {
+  var d = $("detail"); d.textContent = ""; d.scrollTop = 0;
+  if (!j) { d.appendChild(el("div", {className: "placeholder", text: "Select a job to read what it asks of you and how to apply."})); return; }
+  var title = el("h2", {text: j.title}); title.dir = "auto";
+  var ph = el("div", {className: "ph"}, [title]);
+  if (j.url) { var op = el("button", {className: "btn primary", type: "button", text: "Open original posting"}); op.addEventListener("click", function () { openUrl(j.url); }); ph.appendChild(op); }
+  d.appendChild(ph);
+  if (j.title_en && j.title_en !== j.title) d.appendChild(el("div", {className: "en", text: j.title_en}));
+  var bd = badgesFor(j); if (bd.length) d.appendChild(el("div", {className: "bd"}, bd));
+  d.appendChild(metaFor(j));
+  if (j.why) d.appendChild(el("div", {className: "why", text: "Why it matches: " + j.why}));
+  var fact = function (h, txt, none) { var p = el("p", {text: txt || none, className: txt ? "" : "none"}); p.dir = "auto"; return el("div", {className: "fact"}, [el("h3", {text: h}), p]); };
+  d.appendChild(el("div", {className: "facts"}, [
+    fact("What is required of the applicant", j.requirements, "Not stated in the post."),
+    fact("Submission guideline", j.submission, "Not stated in the post. Use the link below.")]));
+  if (j.url) {
+    var st = j.link_status || "", ok = /^(verified|reachable)/.test(st), bad = /^dead/.test(st);
+    var box = el("div", {className: "linkbox"}, [el("b", {text: "Link"}), el("span", {className: "v", text: j.url}),
+      el("span", {className: "badge " + (ok ? "ok" : bad ? "bad" : "warn"), text: ok ? "Opens" : bad ? "Link is dead (the ad may have expired)" : "Could not be checked"})]);
+    var o = el("button", {className: "btn small", type: "button", text: "Open"}); o.addEventListener("click", function () { openUrl(j.url); }); box.appendChild(o);
+    var c = el("button", {className: "btn small", type: "button", text: "Copy"}); c.addEventListener("click", function () { copyText(j.url); }); box.appendChild(c);
+    d.appendChild(box);
+  }
+  if (j.summary_en) { d.appendChild(el("h3", {className: "sec", text: "English summary"})); d.appendChild(el("p", {className: "desc", text: j.summary_en})); }
+  d.appendChild(el("h3", {className: "sec", text: "Posting text"}));
+  var desc = el("p", {className: "desc", text: j.description || "(no description)"}); desc.dir = "auto"; d.appendChild(desc);
+}
+$("history").addEventListener("change", function () { loadResult($("history").value); });
+function currentReport() { return reports.filter(function (x) { return x.name === cur.name; })[0]; }
+$("openrep").addEventListener("click", function () { var r = currentReport(); if (r && r.html) openThing("report", r.html); });
+$("opencsv").addEventListener("click", function () { var r = currentReport(); if (r && r.csv) openThing("csv", r.csv); });
+$("openfolder").addEventListener("click", function () { openThing("folder"); });
+$("opendata").addEventListener("click", function () { openThing("data"); });
+$("delres").addEventListener("click", function () {
+  if (!cur.name || !confirm("Delete this result and its files?")) return;
+  api("/api/delete", {name: cur.name}).then(function () {
+    cur = {name: "", data: null, jobs: []};
+    return refreshReports().then(function () { return reports.length ? loadResult(reports[0].name) : renderResults(); });
+  });
+});
+
+/* ---------------- sources ---------------- */
+function renderSources() {
+  var sites = cfg.websites || [], box = $("sitelist"); box.textContent = "";
+  $("siteCount").textContent = sites.length ? "(" + sites.length + ")" : "";
+  if (!sites.length) box.appendChild(el("p", {className: "hint", text: "No websites yet. Add one below."}));
+  sites.forEach(function (s, i) {
+    var cb = el("input", {type: "checkbox", checked: s.enabled !== false}); cb.setAttribute("aria-label", "Use " + s.name);
+    cb.addEventListener("change", function () { s.enabled = cb.checked; saveConfig(true).then(renderSearchControls); });
+    var st = sourceStats[s.name], sub = (s.type || "?") + (s.url ? " · " + s.url : (s.pages ? " · " + s.pages[0] : ""));
+    var stat = !st ? null : st.error ? el("span", {className: "badge bad", text: "failed last time"}) : st.found === 0 ? el("span", {className: "badge warn", text: "found nothing"}) : el("span", {className: "badge ok", text: st.found + " found"});
+    var rm = el("button", {className: "btn small danger", type: "button", text: "Delete"});
+    rm.addEventListener("click", function () { if (!confirm("Remove “" + s.name + "” from your sources?")) return; sites.splice(i, 1); saveConfig(true).then(function () { renderAll(); toast("Removed " + s.name); }); });
+    box.appendChild(el("div", {className: "srcrow"}, [el("label", {className: "chk"}, [cb]), el("div", {className: "nm"}, [s.name || "(no name)", el("small", {text: sub})]), stat || "", rm]));
+  });
+  var chans = g(cfg, ["telegram", "channels"], []), cb2 = $("chanlist"); cb2.textContent = "";
+  $("chanCount").textContent = chans.length ? "(" + chans.length + ")" : "";
+  $("t_enabled").checked = g(cfg, ["telegram", "enabled"], true);
+  if (!chans.length) cb2.appendChild(el("p", {className: "hint", text: "No channels yet."}));
+  chans.forEach(function (c, i) {
+    var name = String(c).replace(/^https?:\/\/(t|telegram)\.me\/(s\/)?/i, "").replace(/^@/, ""), st = sourceStats["telegram @" + name];
+    var stat = !st ? null : st.error ? el("span", {className: "badge bad", text: "failed last time"}) : el("span", {className: "badge ok", text: st.found + " ads"});
+    var rm = el("button", {className: "btn small danger", type: "button", text: "Delete"});
+    rm.addEventListener("click", function () { chans.splice(i, 1); saveConfig(true).then(function () { renderAll(); toast("Removed @" + name); }); });
+    cb2.appendChild(el("div", {className: "srcrow"}, [el("div", {className: "nm"}, ["@" + name, el("small", {text: "t.me/" + name})]), stat || "", rm]));
+  });
+}
+$("t_enabled").addEventListener("change", function () { put(["telegram", "enabled"], $("t_enabled").checked); saveConfig(true).then(renderSearchControls); });
+$("addsite_check").addEventListener("click", checkSite);
+$("addsite_url").addEventListener("keydown", function (e) { if (e.key === "Enter") checkSite(); });
+function checkSite() {
+  var url = $("addsite_url").value.trim(), out = $("addsite_out");
+  if (!url) { toast("Enter the address of the page that lists the jobs.", true); return; }
+  $("addsite_check").disabled = true; out.classList.remove("hidden"); out.textContent = "Checking… this can take a few seconds.";
+  api("/api/probe-site", {url: url}).then(function (r) {
+    $("addsite_check").disabled = false; out.textContent = "";
+    if (!r.ok) { out.appendChild(el("span", {className: "badge bad", text: "not recognised"})); out.appendChild(el("p", {text: r.error || "Could not check that address."})); return; }
+    var nameIn = el("input", {type: "text", value: r.entry.name}), ul = el("ul", {});
+    (r.titles || []).filter(Boolean).slice(0, 5).forEach(function (t) { ul.appendChild(el("li", {text: t})); });
+    var add = el("button", {className: "btn primary", type: "button", text: "Add this website"});
+    add.addEventListener("click", function () {
+      var e = JSON.parse(JSON.stringify(r.entry)); e.name = nameIn.value.trim() || e.name;
+      var names = (cfg.websites || []).map(function (s) { return s.name; }); while (names.indexOf(e.name) >= 0) e.name += " (2)";
+      if (!Array.isArray(cfg.websites)) cfg.websites = [];
+      cfg.websites.push(e);
+      saveConfig(true).then(function (ok) { if (!ok) { cfg.websites.pop(); return; } $("addsite_url").value = ""; out.classList.add("hidden"); renderAll(); toast("Added " + e.name + ". Run a search to read it."); });
+    });
+    out.appendChild(el("span", {className: "badge ok", text: r.kind}));
+    out.appendChild(el("p", {text: r.note + (r.count ? " (" + r.count + " found on the page)" : "")}));
+    out.appendChild(el("div", {className: "lbl", text: "Preview"})); out.appendChild(ul);
+    out.appendChild(el("div", {className: "row"}, [el("label", {className: "field grow"}, [el("span", {text: "Name"}), nameIn]), add]));
+  });
+}
+$("addchan_btn").addEventListener("click", addChannel);
+$("addchan").addEventListener("keydown", function (e) { if (e.key === "Enter") addChannel(); });
+function addChannel() {
+  var raw = $("addchan").value.trim(), out = $("addchan_out");
+  if (!raw) { toast("Enter a channel link or @name.", true); return; }
+  $("addchan_btn").disabled = true; out.textContent = "Checking the channel…";
+  api("/api/probe-channel", {channel: raw}).then(function (r) {
+    $("addchan_btn").disabled = false;
+    if (!r.ok) { out.textContent = r.error || "Could not check that channel."; return; }
+    var chans = g(cfg, ["telegram", "channels"], []);
+    if (chans.map(function (c) { return String(c).toLowerCase().replace(/^.*\.me\/(s\/)?|^@/g, ""); }).indexOf(r.channel.toLowerCase()) >= 0) { out.textContent = "@" + r.channel + " is already in your list."; return; }
+    chans.push("https://t.me/" + r.channel); put(["telegram", "channels"], chans); put(["telegram", "enabled"], true);
+    saveConfig(true).then(function () { $("addchan").value = ""; out.textContent = ""; renderAll(); toast("Added " + (r.title || "@" + r.channel)); });
+  });
+}
+
+/* ---------------- settings ---------------- */
+function renderSettings() {
+  $("s_email").value = g(cfg, ["contact_email"], ""); $("s_days").value = g(cfg, ["max_age_days"], 7);
+  $("s_parallel").value = g(cfg, ["parallel_sources"], 8); $("s_delay").value = g(cfg, ["http", "delay_between_requests_seconds"], 1.5);
+  $("s_robots").checked = g(cfg, ["http", "respect_robots_txt"], true); $("s_dedupe").checked = g(cfg, ["dedupe", "enabled"], true);
+  $("s_auto").checked = g(cfg, ["auto_scan_on_start"], false); $("s_autohours").value = g(cfg, ["auto_scan_hours"], 0);
+  $("s_cache").checked = g(cfg, ["cache", "enabled"], true); $("cachesize").textContent = env.cache_kb ? "Using " + env.cache_kb + " KB." : "Empty.";
+  var langs = g(cfg, ["filters", "acceptable_languages"], ["en", "fa", "tr"]);
+  document.querySelectorAll(".lang").forEach(function (c) { c.checked = langs.indexOf(c.value) >= 0; });
+  $("s_intern").checked = g(cfg, ["filters", "accept_internships"], true); $("s_junior").checked = g(cfg, ["filters", "accept_junior_titles"], true); $("s_nofemale").checked = g(cfg, ["filters", "exclude_female_only"], true);
+  $("s_verify").checked = g(cfg, ["filters", "verify_links"], true); $("s_years").value = g(cfg, ["filters", "max_min_years_required"], 0);
+  setSeg($("s_modeseg"), "data-mode", g(cfg, ["filters", "work_mode"], "any"));
+  $("s_loc").value = g(cfg, ["filters", "location_keywords"], []).join(", "); $("s_remote").checked = g(cfg, ["filters", "include_remote_even_if_location_set"], true);
+  $("s_inc").value = g(cfg, ["filters", "extra_include_keywords"], []).join(", "); $("s_exc").value = g(cfg, ["filters", "extra_exclude_title_keywords"], []).join(", "); $("s_excomp").value = g(cfg, ["filters", "exclude_companies"], []).join(", ");
+  $("tr_backend").value = g(cfg, ["translation", "backend"], "none"); $("tr_url").value = g(cfg, ["translation", "libretranslate_url"], "");
+  syncRaw();
+}
+function bindSettings() {
+  var b = function (id, fn) { $(id).addEventListener("change", function () { fn(); autosave(); }); };
+  b("s_email", function () { put(["contact_email"], $("s_email").value.trim()); });
+  b("s_days", function () { put(["max_age_days"], Math.max(0.1, Math.min(7, num("s_days", 7)))); });
+  b("s_parallel", function () { put(["parallel_sources"], Math.max(1, Math.round(num("s_parallel", 8)))); });
+  b("s_delay", function () { put(["http", "delay_between_requests_seconds"], Math.max(0.2, num("s_delay", 1.5))); });
+  b("s_robots", function () { put(["http", "respect_robots_txt"], $("s_robots").checked); });
+  b("s_dedupe", function () { put(["dedupe", "enabled"], $("s_dedupe").checked); });
+  b("s_auto", function () { put(["auto_scan_on_start"], $("s_auto").checked); });
+  b("s_autohours", function () { put(["auto_scan_hours"], Math.max(0, Math.min(48, Math.round(num("s_autohours", 0))))); });
+  b("s_cache", function () { put(["cache", "enabled"], $("s_cache").checked); });
+  document.querySelectorAll(".lang").forEach(function (c) { c.addEventListener("change", function () { var l = []; document.querySelectorAll(".lang").forEach(function (x) { if (x.checked) l.push(x.value); }); put(["filters", "acceptable_languages"], l); autosave(); }); });
+  b("s_intern", function () { put(["filters", "accept_internships"], $("s_intern").checked); });
+  b("s_junior", function () { put(["filters", "accept_junior_titles"], $("s_junior").checked); });
+  b("s_nofemale", function () { put(["filters", "exclude_female_only"], $("s_nofemale").checked); });
+  b("s_verify", function () { put(["filters", "verify_links"], $("s_verify").checked); });
+  b("s_years", function () { put(["filters", "max_min_years_required"], Math.max(0, Math.round(num("s_years", 0)))); });
+  b("s_loc", function () { put(["filters", "location_keywords"], csvList($("s_loc").value)); });
+  b("s_remote", function () { put(["filters", "include_remote_even_if_location_set"], $("s_remote").checked); });
+  b("s_inc", function () { put(["filters", "extra_include_keywords"], csvList($("s_inc").value)); });
+  b("s_exc", function () { put(["filters", "extra_exclude_title_keywords"], csvList($("s_exc").value)); });
+  b("s_excomp", function () { put(["filters", "exclude_companies"], csvList($("s_excomp").value)); });
+  b("tr_backend", function () { put(["translation", "backend"], $("tr_backend").value); });
+  b("tr_url", function () { put(["translation", "libretranslate_url"], $("tr_url").value.trim()); });
+  onSeg($("s_modeseg"), "data-mode", function (v) { put(["filters", "work_mode"], v); setSeg($("modeseg"), "data-mode", v); setPref("mode", v); autosave(); });
+  $("clearcache").addEventListener("click", function () {
+    api("/api/clear-cache", {}).then(function (r) { if (r.ok) { env.cache_kb = 0; $("cachesize").textContent = "Empty."; toast("Remembered pages cleared."); } else toast(r.error || "Could not clear.", true); });
+  });
+  $("applyraw").addEventListener("click", function () {
+    try {
+      var o = JSON.parse($("raw").value);
+      if (!o || typeof o !== "object" || Array.isArray(o)) throw new Error("The text must be a JSON object { ... }.");
+      var old = cfg; cfg = o;
+      saveConfig(false).then(function (ok) { if (ok) renderAll(); else cfg = old; });
+    } catch (e) { toast("The text is not valid: " + e.message, true); }
+  });
+}
+
+/* ---------------- start-up: show the last result at once, then look for new postings ---------------- */
+function maybeAutoScan() {
+  if (autoStarted || lastStatus === "running") return;
+  autoStarted = true;
+  if (g(cfg, ["auto_scan_on_start"], false) && $("sources").querySelector("input")) startScan(true);
+}
+setInterval(function () { fetch("/api/ping", {cache: "no-store"}).catch(function () {}); }, 5000);  // lets the program notice that its window was closed
+window.addEventListener("pagehide", function () { try { fetch("/api/bye", {keepalive: true, cache: "no-store"}); } catch (e) {} });
+setInterval(function () {  // optional repeat while the program stays open
+  var hrs = g(cfg || {}, ["auto_scan_hours"], 0);
+  if (hrs > 0 && lastStatus !== "running" && finishedAt && Date.now() - finishedAt > hrs * 3600000) { finishedAt = Date.now(); startScan(true); }
+}, 60000);
+bindSettings();
+api("/api/prefs").then(function (r) { prefs = (r && r.prefs) || {}; return loadConfig(); }).then(function () {
+  if (!cfg) return;
+  if (["sources", "settings"].indexOf(prefs.tab) >= 0) $("tab-" + prefs.tab).click();
+  return api("/api/status?since=0").then(function (s) {
+    lastStatus = s.status;
+    return refreshReports().then(function () { return reports.length ? loadResult(reports[0].name) : null; }).then(function () {
+      if (s.status === "running") startPolling(); else maybeAutoScan();
+    });
+  });
+});
+</script>
+</body>
+</html>
